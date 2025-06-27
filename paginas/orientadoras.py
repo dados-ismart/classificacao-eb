@@ -63,7 +63,9 @@ if st.session_state['ra_nome'] != ra_nome:
 
 # progresso
 alunos_orientadora_total = bd.query(f"Orientadora == '{orientadora}'")
-alunos_orientadora_total_registrados = alunos_orientadora_total.query("confirmacao_classificacao_orientadora == 'Não' or confirmacao_classificacao_orientadora == 'Sim'")
+if df.shape[0] > 0:
+    alunos_orientadora_total_registrados = alunos_orientadora_total.query("confirmacao_classificacao_orientadora == 'Não' or confirmacao_classificacao_orientadora == 'Sim'")
+
 try:
     st.progress(alunos_orientadora_total_registrados.shape[0]/alunos_orientadora_total.shape[0], f'Você registrou: **{alunos_orientadora_total_registrados.shape[0]}/{alunos_orientadora_total.shape[0]}**')
 except ZeroDivisionError:
