@@ -69,7 +69,7 @@ else:
     alunos_orientadora_total_registrados = 0
 
 try:
-    st.progress(alunos_orientadora_total_registrados/alunos_orientadora_total.shape[0], f'Você registrou: **{alunos_orientadora_total_registrados.shape[0]}/{alunos_orientadora_total.shape[0]}**')
+    st.progress(alunos_orientadora_total_registrados/alunos_orientadora_total.shape[0], f'Você registrou: **{alunos_orientadora_total_registrados}/{alunos_orientadora_total.shape[0]}**')
 except ZeroDivisionError:
     st.error('Zero Resultados')
 
