@@ -637,6 +637,8 @@ else:
     # Filtro personalizado no histórico
     if df.shape[0] > 0:
         df_historico_filtrado = df_historico[~df_historico['RA'].isin(df['RA'])]
+    else:
+        df_historico_filtrado = df_historico
     df_historico_filtrado = df_historico_filtrado[df_historico_filtrado['RA'].isin(bd_segmentado['RA'])]
     df_historico_filtrado = df_historico_filtrado.query("confirmacao_classificacao_orientadora.notna()")    
     df_historico_filtrado.sort_values(by='data_submit', ascending = False, inplace=True)
