@@ -16,8 +16,9 @@ bd = ler_sheets_cache('bd')
 bd = bd.dropna(subset=['RA - NOME'])
 df = ler_sheets('registro')
 df_historico = ler_sheets_cache('historico')
-bd = bd.merge(df[['RA', 'confirmacao_classificacao_orientadora','conclusao_classificacao_final']], how='left', on='RA')
-bd = bd.sort_values(by=['conclusao_classificacao_final','confirmacao_classificacao_orientadora'], ascending = False)
+if bd is not None:
+    bd = bd.merge(df[['RA', 'confirmacao_classificacao_orientadora','conclusao_classificacao_final']], how='left', on='RA')
+    bd = bd.sort_values(by=['conclusao_classificacao_final','confirmacao_classificacao_orientadora'], ascending = False)
 df_login = ler_sheets_cache('login')
 
 orientadora = df_login.loc[df_login['email'] == email, 'Orientadora'].iloc[0]
