@@ -27,7 +27,8 @@ st.title('Formulário de Classificação')
 
 # filtros
 bd_segmentado = bd.query(f"Orientadora == '{orientadora}'")
-bd_segmentado = bd_segmentado.query("confirmacao_classificacao_orientadora != 'Não' and confirmacao_classificacao_orientadora != 'Sim'")
+if df.shape[0] > 0:
+    bd_segmentado = bd_segmentado.query("confirmacao_classificacao_orientadora != 'Não' and confirmacao_classificacao_orientadora != 'Sim'")    
 
 col1, col2, col3 = st.columns(3)
 # Aplique os filtros
