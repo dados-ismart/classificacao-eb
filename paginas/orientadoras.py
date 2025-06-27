@@ -66,8 +66,8 @@ alunos_orientadora_total = bd.query(f"Orientadora == '{orientadora}'")
 if df.shape[0] > 0:
     alunos_orientadora_total_registrados = alunos_orientadora_total.query("confirmacao_classificacao_orientadora == 'Não' or confirmacao_classificacao_orientadora == 'Sim'")
 else:
-    alunos_orientadora_total_registrados = alunos_orientadora_total
-    
+    alunos_orientadora_total_registrados = pd.DataFrame()
+
 try:
     st.progress(alunos_orientadora_total_registrados.shape[0]/alunos_orientadora_total.shape[0], f'Você registrou: **{alunos_orientadora_total_registrados.shape[0]}/{alunos_orientadora_total.shape[0]}**')
 except ZeroDivisionError:
@@ -236,8 +236,70 @@ if ra_nome is not None:
     st.divider()
     caixa_sim_nao = ['Não', 'Sim']
     caixa_reversao = ["Alta", "Média", "Baixa"]
+
+    
+ 
     #Variaveis Registro
-    if df.query(f'RA == {ra}').empty:
+    if df.shape[0] > 0:
+        if df.query(f'RA == {ra}').empty:
+            if not df_historico.query(f'RA == {ra}').empty:
+                registro_resposta_argumentacao = df_historico.loc[df_historico['RA'] == ra, 'resposta_argumentacao'].iloc[0]
+                registro_resposta_rotina_estudos = df_historico.loc[df_historico['RA'] == ra, 'resposta_rotina_estudos'].iloc[0]
+                registro_resposta_faltas = df_historico.loc[df_historico['RA'] == ra, 'resposta_faltas'].iloc[0]
+                registro_resposta_atividades_extracurriculares = df_historico.loc[df_historico['RA'] == ra, 'resposta_atividades_extracurriculares'].iloc[0]
+                registro_resposta_respeita_escola = df_historico.loc[df_historico['RA'] == ra, 'resposta_respeita_escola'].iloc[0]
+                registro_resposta_atividades_obrigatorias_ismart = df_historico.loc[df_historico['RA'] == ra, 'resposta_atividades_obrigatorias_ismart'].iloc[0]
+                registro_resposta_colaboracao = df_historico.loc[df_historico['RA'] == ra, 'resposta_colaboracao'].iloc[0]
+                registro_resposta_atividades_nao_obrigatorias_ismart = df_historico.loc[df_historico['RA'] == ra, 'resposta_atividades_nao_obrigatorias_ismart'].iloc[0]
+                registro_resposta_networking = df_historico.loc[df_historico['RA'] == ra, 'resposta_networking'].iloc[0]
+                registro_resposta_proatividade = df_historico.loc[df_historico['RA'] == ra, 'resposta_proatividade'].iloc[0]
+                registro_resposta_questoes_psiquicas = df_historico.loc[df_historico['RA'] == ra, 'resposta_questoes_psiquicas'].iloc[0]
+                registro_resposta_questoes_familiares = df_historico.loc[df_historico['RA'] == ra, 'resposta_questoes_familiares'].iloc[0]
+                registro_resposta_questoes_saude = df_historico.loc[df_historico['RA'] == ra, 'resposta_questoes_saude'].iloc[0]
+                registro_resposta_ideacao_suicida = df_historico.loc[df_historico['RA'] == ra, 'resposta_ideacao_suicida'].iloc[0]
+                registro_resposta_adaptacao_projeto = df_historico.loc[df_historico['RA'] == ra, 'resposta_adaptacao_projeto'].iloc[0]
+                registro_resposta_seguranca_profissional = df_historico.loc[df_historico['RA'] == ra, 'resposta_seguranca_profissional'].iloc[0]
+                registro_resposta_curso_apoiado = df_historico.loc[df_historico['RA'] == ra, 'resposta_curso_apoiado'].iloc[0]
+                registro_resposta_nota_condizente = df_historico.loc[df_historico['RA'] == ra, 'resposta_nota_condizente'].iloc[0]
+            else:
+                registro_resposta_argumentacao = None
+                registro_resposta_rotina_estudos = None
+                registro_resposta_faltas = None
+                registro_resposta_atividades_extracurriculares = None
+                registro_resposta_respeita_escola = None
+                registro_resposta_atividades_obrigatorias_ismart = None
+                registro_resposta_colaboracao = None
+                registro_resposta_atividades_nao_obrigatorias_ismart = None
+                registro_resposta_networking = None
+                registro_resposta_proatividade = None
+                registro_resposta_questoes_psiquicas = None
+                registro_resposta_questoes_familiares = None
+                registro_resposta_questoes_saude = None
+                registro_resposta_ideacao_suicida = None
+                registro_resposta_adaptacao_projeto = None
+                registro_resposta_seguranca_profissional = None
+                registro_resposta_curso_apoiado = None
+                registro_resposta_nota_condizente = None
+        else:
+            registro_resposta_argumentacao = df.loc[df['RA'] == ra, 'resposta_argumentacao'].iloc[0]
+            registro_resposta_rotina_estudos = df.loc[df['RA'] == ra, 'resposta_rotina_estudos'].iloc[0]
+            registro_resposta_faltas = df.loc[df['RA'] == ra, 'resposta_faltas'].iloc[0]
+            registro_resposta_atividades_extracurriculares = df.loc[df['RA'] == ra, 'resposta_atividades_extracurriculares'].iloc[0]
+            registro_resposta_respeita_escola = df.loc[df['RA'] == ra, 'resposta_respeita_escola'].iloc[0]
+            registro_resposta_atividades_obrigatorias_ismart = df.loc[df['RA'] == ra, 'resposta_atividades_obrigatorias_ismart'].iloc[0]
+            registro_resposta_colaboracao = df.loc[df['RA'] == ra, 'resposta_colaboracao'].iloc[0]
+            registro_resposta_atividades_nao_obrigatorias_ismart = df.loc[df['RA'] == ra, 'resposta_atividades_nao_obrigatorias_ismart'].iloc[0]
+            registro_resposta_networking = df.loc[df['RA'] == ra, 'resposta_networking'].iloc[0]
+            registro_resposta_proatividade = df.loc[df['RA'] == ra, 'resposta_proatividade'].iloc[0]
+            registro_resposta_questoes_psiquicas = df.loc[df['RA'] == ra, 'resposta_questoes_psiquicas'].iloc[0]
+            registro_resposta_questoes_familiares = df.loc[df['RA'] == ra, 'resposta_questoes_familiares'].iloc[0]
+            registro_resposta_questoes_saude = df.loc[df['RA'] == ra, 'resposta_questoes_saude'].iloc[0]
+            registro_resposta_ideacao_suicida = df.loc[df['RA'] == ra, 'resposta_ideacao_suicida'].iloc[0]
+            registro_resposta_adaptacao_projeto = df.loc[df['RA'] == ra, 'resposta_adaptacao_projeto'].iloc[0]
+            registro_resposta_seguranca_profissional = df.loc[df['RA'] == ra, 'resposta_seguranca_profissional'].iloc[0]
+            registro_resposta_curso_apoiado = df.loc[df['RA'] == ra, 'resposta_curso_apoiado'].iloc[0]
+            registro_resposta_nota_condizente = df.loc[df['RA'] == ra, 'resposta_nota_condizente'].iloc[0]
+    else:
         if not df_historico.query(f'RA == {ra}').empty:
             registro_resposta_argumentacao = df_historico.loc[df_historico['RA'] == ra, 'resposta_argumentacao'].iloc[0]
             registro_resposta_rotina_estudos = df_historico.loc[df_historico['RA'] == ra, 'resposta_rotina_estudos'].iloc[0]
@@ -276,25 +338,6 @@ if ra_nome is not None:
             registro_resposta_seguranca_profissional = None
             registro_resposta_curso_apoiado = None
             registro_resposta_nota_condizente = None
-    else:
-        registro_resposta_argumentacao = df.loc[df['RA'] == ra, 'resposta_argumentacao'].iloc[0]
-        registro_resposta_rotina_estudos = df.loc[df['RA'] == ra, 'resposta_rotina_estudos'].iloc[0]
-        registro_resposta_faltas = df.loc[df['RA'] == ra, 'resposta_faltas'].iloc[0]
-        registro_resposta_atividades_extracurriculares = df.loc[df['RA'] == ra, 'resposta_atividades_extracurriculares'].iloc[0]
-        registro_resposta_respeita_escola = df.loc[df['RA'] == ra, 'resposta_respeita_escola'].iloc[0]
-        registro_resposta_atividades_obrigatorias_ismart = df.loc[df['RA'] == ra, 'resposta_atividades_obrigatorias_ismart'].iloc[0]
-        registro_resposta_colaboracao = df.loc[df['RA'] == ra, 'resposta_colaboracao'].iloc[0]
-        registro_resposta_atividades_nao_obrigatorias_ismart = df.loc[df['RA'] == ra, 'resposta_atividades_nao_obrigatorias_ismart'].iloc[0]
-        registro_resposta_networking = df.loc[df['RA'] == ra, 'resposta_networking'].iloc[0]
-        registro_resposta_proatividade = df.loc[df['RA'] == ra, 'resposta_proatividade'].iloc[0]
-        registro_resposta_questoes_psiquicas = df.loc[df['RA'] == ra, 'resposta_questoes_psiquicas'].iloc[0]
-        registro_resposta_questoes_familiares = df.loc[df['RA'] == ra, 'resposta_questoes_familiares'].iloc[0]
-        registro_resposta_questoes_saude = df.loc[df['RA'] == ra, 'resposta_questoes_saude'].iloc[0]
-        registro_resposta_ideacao_suicida = df.loc[df['RA'] == ra, 'resposta_ideacao_suicida'].iloc[0]
-        registro_resposta_adaptacao_projeto = df.loc[df['RA'] == ra, 'resposta_adaptacao_projeto'].iloc[0]
-        registro_resposta_seguranca_profissional = df.loc[df['RA'] == ra, 'resposta_seguranca_profissional'].iloc[0]
-        registro_resposta_curso_apoiado = df.loc[df['RA'] == ra, 'resposta_curso_apoiado'].iloc[0]
-        registro_resposta_nota_condizente = df.loc[df['RA'] == ra, 'resposta_nota_condizente'].iloc[0]
 
     with st.form(key='formulario'):
         #listas do formulario
