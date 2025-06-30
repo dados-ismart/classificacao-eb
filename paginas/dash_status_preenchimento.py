@@ -164,13 +164,8 @@ else:
 
                         Sua avaliação é fundamental para mantermos os registros atualizados. Para concluir, por favor, acesse o sistema através do link abaixo:
 
-                        Links separados por praça:
+                        Link: https://classificacao-ismart.streamlit.app/
 
-                        •	🟣 BH: Classificação Praça BH - https://classificacao-ismart-bh.streamlit.app/
-                        •	🔵 RJ: Classificação Praça RJ - https://classificacao-ismart-rj.streamlit.app/
-                        •	🟡 SJC: Classificação Praça SJC - https://classificacao-ismart-sjc.streamlit.app/
-                        •	🟢 SP: Classificação Praça SP - https://classificacao-ismart-sp.streamlit.app/
-                        
                         Só lembrando as categorias de avaliação (baseadas apenas nas notas):
 
                         ❌ Crítico Escolar - 1 nota com diferença menor que 1 ponto da média ou mais de 2 notas abaixo da média
