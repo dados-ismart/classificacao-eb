@@ -13,14 +13,16 @@ df = ler_sheets('registro')
 bd = ler_sheets_cache('bd')
 bd = bd.dropna(subset=['RA - NOME'])
 df_login = ler_sheets_cache('login')
-bd = bd.merge(df[['RA', 'confirmacao_classificacao_orientadora','conclusao_classificacao_final']], how='left', on='RA')
-bd = bd.sort_values(by=['conclusao_classificacao_final','confirmacao_classificacao_orientadora'], ascending = False)
+if df.shape[0] > 0:
+    bd = bd.merge(df[['RA', 'confirmacao_classificacao_orientadora','conclusao_classificacao_final']], how='left', on='RA')
+    bd = bd.sort_values(by=['conclusao_classificacao_final','confirmacao_classificacao_orientadora'], ascending = False)
 
 st.title('Formulário de Classificação')
 
 # filtros bd
-bd_segmentado = bd.query("conclusao_classificacao_final != 'Sim'")
-bd_segmentado = bd_segmentado.query("confirmacao_classificacao_orientadora == 'Não' or confirmacao_classificacao_orientadora == 'Sim'")
+if df.shape[0] > 0:
+    bd_segmentado = bd.query("conclusao_classificacao_final != 'Sim'")
+    bd_segmentado = bd_segmentado.query("confirmacao_classificacao_orientadora == 'Não' or confirmacao_classificacao_orientadora == 'Sim'")
 cidade_login = df_login.query(f'email == "{email}"')["Cidade"].iloc[0]
 bd_segmentado = bd_segmentado.query(f'Cidade == "{cidade_login}"')
 
