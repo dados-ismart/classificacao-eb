@@ -59,7 +59,10 @@ except ZeroDivisionError:
     st.error('Zero Resultados')
 
 #Primeira Tabela - Confirmação
-df_coord = df.query('confirmacao_classificacao_orientadora == "Sim" or confirmacao_classificacao_orientadora == "Não"')
+if df.shape[0] > 0:
+    df_coord = df.query('confirmacao_classificacao_orientadora == "Sim" or confirmacao_classificacao_orientadora == "Não"')
+else:
+    df_coord = df
 df_coord = df_coord[df_coord['RA'].isin(bd_segmentado['RA'])]
 
 df_tabela_editavel = df_coord.query('confirmacao_classificacao_coordenacao != "Sim" and confirmacao_classificacao_coordenacao != "Não"')
