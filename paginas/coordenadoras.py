@@ -23,6 +23,8 @@ st.title('Formulário de Classificação')
 if df.shape[0] > 0:
     bd_segmentado = bd.query("conclusao_classificacao_final != 'Sim'")
     bd_segmentado = bd_segmentado.query("confirmacao_classificacao_orientadora == 'Não' or confirmacao_classificacao_orientadora == 'Sim'")
+else:
+    bd_segmentado = bd
 cidade_login = df_login.query(f'email == "{email}"')["Cidade"].iloc[0]
 bd_segmentado = bd_segmentado.query(f'Cidade == "{cidade_login}"')
 
