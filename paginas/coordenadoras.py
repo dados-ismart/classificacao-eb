@@ -59,9 +59,9 @@ except ZeroDivisionError:
 #Primeira Tabela - Confirmação
 if df.shape[0] > 0:
     df_coord = df.query('confirmacao_classificacao_orientadora == "Sim" or confirmacao_classificacao_orientadora == "Não"')
+    df_coord = df_coord[df_coord['RA'].isin(bd_segmentado['RA'])]
 else:
     df_coord = df
-df_coord = df_coord[df_coord['RA'].isin(bd_segmentado['RA'])]
 
 df_tabela_editavel = df_coord.query('confirmacao_classificacao_coordenacao != "Sim" and confirmacao_classificacao_coordenacao != "Não"')
 df_tabela_editavel['manter_dados_iguais'] = '-' 
