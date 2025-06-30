@@ -49,10 +49,8 @@ qtd_praca = bd.query(f"Cidade == '{cidade_login}'").shape[0]
 qtd_registrados_praca = bd.query(f"Cidade == '{cidade_login}'")
 if df.shape[0] > 0:
     qtd_registrados_praca = qtd_registrados_praca.query("confirmacao_classificacao_orientadora == 'Não' or confirmacao_classificacao_orientadora == 'Sim'").shape[0]
-    qtd_alunos_registrados = bd.query("confirmacao_classificacao_orientadora == 'Não' or confirmacao_classificacao_orientadora == 'Sim'").shape[0]
 else:
-    qtd_registrados_praca = qtd_registrados_praca.shape[0]
-    qtd_alunos_registrados = bd.shape[0]
+    qtd_registrados_praca = 0
 try:
     st.progress(qtd_registrados_praca/qtd_praca, f'Status de Preenchimento das Orientadoras da Praça ***{cidade_login}***: **{qtd_registrados_praca}/{qtd_praca}**')
 except ZeroDivisionError:
