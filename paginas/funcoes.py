@@ -43,6 +43,9 @@ def conn():
 conn = conn()
 
 def ler_sheets(aba, ttl=1):
+    """
+    Faz a leitura da planiha do google sheets, sem cache
+    """
     for i in range(0, 10):
         try:
             spreadsheet_name = st.secrets["connections"]["gsheets"]["spreadsheet_name"]
@@ -59,6 +62,9 @@ def ler_sheets(aba, ttl=1):
 
 @st.cache_data(show_spinner=False, ttl=7200) 
 def ler_sheets_cache(aba):
+    """
+    Faz a leitura da planiha do google sheets, com cache
+    """
     for i in range(0, 10):
         try:
             spreadsheet_name = st.secrets["connections"]["gsheets"]["spreadsheet_name"]
@@ -75,6 +81,9 @@ def ler_sheets_cache(aba):
     st.stop()
     
 def pontuar(resposta, lista):
+    """
+    Retorna pontuacao para a classificacao
+    """
     try:
         for index, elemento in enumerate(lista):
             if elemento == resposta:
@@ -83,6 +92,9 @@ def pontuar(resposta, lista):
         return st.error('Erro Interno No Formulário')
 
 def classificar(media_calibrada, portugues, matematica, humanas, idiomas, ciencias_naturais, resposta_faltas, ano, caixa_nota_condizente, resposta_adaptacao_projeto , resposta_nota_condizente, resposta_seguranca_profissional, resposta_curso_apoiado , caixa_fragilidade, resposta_questoes_saude, resposta_questoes_familiares, resposta_questoes_psiquicas, resposta_ideacao_suicida , caixa_ideacao_suicida , resposta_argumentacao, resposta_rotina_estudos, resposta_atividades_extracurriculares, resposta_respeita_escola, resposta_atividades_obrigatorias_ismart, resposta_colaboracao, resposta_atividades_nao_obrigatorias_ismart, resposta_networking, resposta_proatividade,caixa_argumentacao,caixa_rotina_estudos,caixa_nao_sim,caixa_atividades_extracurriculares,caixa_nunca_eventualmente_sempre,caixa_networking, caixa_classificacao, caixa_justificativa_classificacao):
+    """
+    Retorna classificação os alunos com base nos argumentos
+    """
     classificacao = ''
     motivo = ''
 
@@ -238,52 +250,6 @@ def classificar(media_calibrada, portugues, matematica, humanas, idiomas, cienci
     motivo = motivo[:-2]
     return classificacao, motivo
 
-def registrar_substituindo_df(df_insert, aba, coluna_apoio, remover_registros_anteriores=True):
-    #Leitura da aba registro e checa se é nula
-    for i in range(0, 2):
-        df = ler_sheets(aba)
-        if df.shape[0] == 0:
-            sleep(3)
-            continue
-        else: 
-            break
-
-    #Limpar linhas duplicadas (registros_anteriores)
-    if remover_registros_anteriores:
-        ra = df_insert['RA'].to_list()
-        if isinstance(ra, list) and ra: 
-            df = df[~df['RA'].isin(ra)]
-
-    #REGISTRAR
-    for a in range(1, 4):
-        try:
-            updared_df = pd.concat([df, df_insert], ignore_index=True)
-            conn.update(worksheet=aba, data=updared_df, append=True)
-            sleep(0.2)
-            st.success('Sucesso!')
-            sleep(0.5)
-            break
-        except:
-            sleep(0.2)
-            df = ler_sheets(aba)
-            if type(ra) != list:
-                if not df.query(f'RA == {ra} and {coluna_apoio} == {coluna_apoio}').empty:
-                    st.success('Sucesso!')
-                    break
-                else:
-                    st.warning('Erro')
-                    sleep(1)
-                    continue
-            else:
-                if not df.query(f'RA == {ra[0]} and {coluna_apoio} == {coluna_apoio}').empty:
-                    st.success('Sucesso!')
-                    break
-                else:
-                    st.warning('Erro')
-                    sleep(1)
-                    continue
-    st.rerun()
-
 def registrar(df_insert, aba, rerun=True):
     """
     Registra um DataFrame no Google Sheets, garantindo que a ordem das colunas
@@ -372,69 +338,6 @@ def atualizar_linha(aba: str, valor_id, novos_dados: dict):
         st.toast(f"Ocorreu um erro inesperado ao atualizar: {e}", icon="❌")
         sleep(2)
 
-def atualizar_linhas(aba: str, df_updates: pd.DataFrame, id_column: str):
-    """
-    Atualiza múltiplas linhas usando uma estratégia de travamento otimista (hash/checksum)
-    para prevenir condições de corrida sem usar uma célula de lock.
-    """
-    st.toast("Iniciando atualização em lote...", icon="🔄")
-
-    if df_updates.empty:
-        st.toast("Nenhum dado para atualizar.", icon="ℹ️")
-        sleep(2)
-        st.rerun()
-
-    try:
-        # ETAPA 1: LEITURA INICIAL E CRIAÇÃO DO "FINGERPRINT" (HASH)
-        spreadsheet = conn.open(st.secrets["connections"]["gsheets"]["spreadsheet_name"])
-        worksheet = spreadsheet.worksheet(aba)
-        
-        st.write("Lendo o estado inicial da planilha...")
-        df_sheet_initial = pd.DataFrame(worksheet.get_all_records(expected_headers=worksheet.row_values(1)))
-        
-        # Cria um hash do estado inicial. to_json() cria uma representação de texto consistente.
-        hash_inicial = hashlib.sha256(df_sheet_initial.to_json().encode()).hexdigest()
-
-        # ETAPA 2: ATUALIZAÇÃO LOCAL (LÓGICA DO PANDAS)
-        # (Esta parte é a mesma da função anterior)
-        df_sheet_initial[id_column] = df_sheet_initial[id_column].astype(str)
-        df_updates[id_column] = df_updates[id_column].astype(str)
-
-        for col in df_updates.columns:
-            if pd.api.types.is_datetime64_any_dtype(df_updates[col]):
-                df_updates[col] = df_updates[col].dt.strftime('%Y-%m-%d %H:%M:%S')
-
-        df_sheet_indexed = df_sheet_initial.set_index(id_column)
-        df_updates_indexed = df_updates.set_index(id_column)
-        df_sheet_indexed.update(df_updates_indexed)
-        df_final = df_sheet_indexed.reset_index()
-
-        # ETAPA 3: LEITURA DE VERIFICAÇÃO E NOVO "FINGERPRINT"
-        st.toast("Verificando se houve alterações externas...")
-        df_sheet_atual = pd.DataFrame(worksheet.get_all_records(expected_headers=worksheet.row_values(1)))
-        hash_atual = hashlib.sha256(df_sheet_atual.to_json().encode()).hexdigest()
-
-        # ETAPA 4: COMPARAÇÃO E ESCRITA SEGURA
-        if hash_inicial == hash_atual:
-            # Os hashes são iguais! Ninguém mexeu. É seguro escrever.
-            st.toast("Nenhuma alteração detectada. Escrevendo dados na planilha...")
-            dados_para_escrever = [df_final.columns.tolist()] + df_final.values.tolist()
-            worksheet.clear()
-            worksheet.update('A1', dados_para_escrever, value_input_option='USER_ENTERED')
-            
-            st.toast("Registros atualizados com sucesso!", icon="🎉")
-            st.balloons()
-            sleep(2)
-            st.rerun()
-        else:
-            # Os hashes são diferentes! Alguém alterou a planilha. Abortar.
-            st.toast("A planilha foi modificada por outro processo enquanto você trabalhava. Sua atualização foi cancelada para evitar perda de dados. Por favor, tente novamente.", icon="⚠️")
-            return False
-
-    except Exception as e:
-        st.toast(f"Ocorreu um erro inesperado durante a atualização: {e}", icon="❌")
-        return False
-
 def int_para_letra_coluna(n: int) -> str:
     """
     Converte um número de coluna (1-based) para sua letra correspondente no Excel/Sheets.
@@ -496,6 +399,9 @@ def esvaziar_aba(aba: str):
     return False
 
 def retornar_indice(lista, variavel):
+    """
+    Retorna numero da posição da variavel na lista
+    """
     if variavel == None:
         return None
     try:
@@ -506,6 +412,9 @@ def retornar_indice(lista, variavel):
         return None
 
 def to_excel(df):
+    """
+    Transforma em Excel
+    """
     output = BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         df.to_excel(writer, index=False, sheet_name='Dados')
@@ -513,6 +422,9 @@ def to_excel(df):
     return processed_data
 
 def enviar_email(contatos, assunto, mensagem):
+    """
+    Faz o envio de e-mails em massa
+    """
     #Configurações de login
     EMAIL_ADDRESS = st.secrets["email"]
     EMAIL_PASSWORD = st.secrets["senha_email"]
