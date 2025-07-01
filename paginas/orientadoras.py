@@ -495,7 +495,6 @@ if ra_nome is not None:
                         resposta_novo_motivo_classificacao_orientadora += f'{i}; '
                     resposta_novo_motivo_classificacao_orientadora = resposta_novo_motivo_classificacao_orientadora[:-2]
                     resposta_nova_justificativa_classificacao_orientadora = st.text_area(placeholder='Justifique a mudança de classificação', label='Justifique a mudança de classificação')
-                    resposta_nova_justificativa_classificacao_orientadora = resposta_nova_justificativa_classificacao_orientadora.strip()
                     submit_button = st.form_submit_button(label='ALTERAR')
                     if submit_button:
                         if not resposta_nova_classificacao_orientadora or not resposta_novo_motivo_classificacao_orientadora or not resposta_nova_justificativa_classificacao_orientadora:
@@ -554,13 +553,11 @@ if ra_nome is not None:
                         except:
                             historico_descricao_caso = None
                         resposta_descricao_caso = st.text_area(placeholder='Descrição do caso', label='Descrição do caso', value=historico_descricao_caso)
-                        resposta_descricao_caso = resposta_descricao_caso.strip()
                         try:
                             historico_plano_intervencao = df_historico.loc[df_historico['RA'] == ra, 'plano_intervencao'].iloc[0]
                         except:
                             historico_plano_intervencao = None
-                        resposta_plano_intervencao = st.text_area(placeholder='Plano de intervenção', label='Plano de intervenção', value=historico_plano_intervencao).strip()
-                        resposta_plano_intervencao = resposta_plano_intervencao.strip()
+                        resposta_plano_intervencao = st.text_area(placeholder='Plano de intervenção', label='Plano de intervenção', value=historico_plano_intervencao)
                     elif st.session_state['classificacao_atual'] == 'Atenção':
                         resposta_reversao = '-'
                         resposta_descricao_caso = '-'
@@ -568,8 +565,7 @@ if ra_nome is not None:
                             historico_plano_intervencao = df_historico.loc[df_historico['RA'] == ra, 'plano_intervencao'].iloc[0]
                         except:
                             historico_plano_intervencao = None
-                        resposta_plano_intervencao = st.text_area(placeholder='Plano de intervenção', label='Plano de intervenção', value=historico_plano_intervencao).strip()
-                        resposta_plano_intervencao = resposta_plano_intervencao.strip()
+                        resposta_plano_intervencao = st.text_area(placeholder='Plano de intervenção', label='Plano de intervenção', value=historico_plano_intervencao)
                     else:
                         resposta_reversao = '-'
                         resposta_descricao_caso = '-'
