@@ -94,6 +94,12 @@ tutorial = st.Page(
     icon= "🎥"
 )
 
+radar_saude_mental = st.Page(
+    "paginas/radar_saude_mental.py",
+    title="Radar de Saúde Mental",
+    icon="🧠"
+)
+
 # --- NAVIGATION SETUP [WITH SECTIONS]---
 if check_microsoft_login():
     if "auth_success_shown" not in st.session_state:
@@ -103,13 +109,13 @@ if check_microsoft_login():
     
     email = st.user.email 
     if df_login.query(f'email == "{email}"')["cargo"].iloc[0] == "coordenação":
-        pg = st.navigation({
-            "Páginas": [pagina_inicial_coordenadora, dash, dash_status_preenchimento, tutorial],
-        }, position='top')    
+        pg = st.navigation(
+            [pagina_inicial_coordenadora, dash, dash_status_preenchimento, tutorial]
+        , position='top')    
     else:
-        pg = st.navigation({
-            "Páginas": [pagina_inicial_orientadora, dash, dash_status_preenchimento, tutorial],
-        }, position='top')  
+        pg = st.navigation(
+            [pagina_inicial_orientadora, radar_saude_mental, dash, dash_status_preenchimento, tutorial]
+        , position='top')  
 
     with st.sidebar:
         if st.button("🚪 **Sair da conta**", 

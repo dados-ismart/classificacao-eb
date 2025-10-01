@@ -11,6 +11,7 @@ import ssl
 from email.message import EmailMessage
 from datetime import datetime
 import hashlib
+from typing import Optional, Dict, List
 
 @st.cache_resource(ttl=7200)
 def conn():
@@ -79,7 +80,87 @@ def ler_sheets_cache(aba):
     if st.button('Tentar novamente'):
         st.rerun()
     st.stop()
-    
+
+@st.cache_data(show_spinner=False, ttl=7200)
+def ler_roster(url: str, worksheet: Optional[str] = None, header_row: int = 1) -> pd.DataFrame:
+    """
+    Lê um Google Sheet por URL (e worksheet opcional), usando a linha `header_row` (1-indexed)
+    como cabeçalho, corrigindo cabeçalhos duplicados/vazios e normalizando espaços.
+    """
+    try:
+        import gspread
+    except Exception:
+        st.error("Pacotes do Google Sheets não instalados (gspread).")
+        return pd.DataFrame()
+
+    sa = st.secrets.get("connections", {}).get("gsheets", None)
+    if not sa:
+        st.error("Credenciais do Google (connections.gsheets) não configuradas no secrets.")
+        return pd.DataFrame()
+
+    try:
+        gc = gspread.service_account_from_dict(dict(sa))
+        sh = gc.open_by_url(url)
+        ws = sh.worksheet(worksheet) if worksheet else sh.sheet1
+
+        # Puxa todas as células (inclui possíveis colunas sem título)
+        values: list[list[str]] = ws.get_all_values()
+        if not values:
+            return pd.DataFrame()
+
+        # header_row é 1-indexed -> converte pra índice de lista (0-indexed)
+        hr = max(1, header_row) - 1
+        if hr >= len(values):
+            st.error(f"header_row={header_row} está abaixo dos dados (n_linhas={len(values)}).")
+            return pd.DataFrame()
+
+        header_raw = values[hr]
+        # normaliza espaços e quebras de linha; mantém string
+        header_norm = []
+        for h in header_raw:
+            h = (h or "").replace("\n", " ").replace("\r", " ").strip()
+            h = " ".join(h.split())  # colapsa espaços múltiplos
+            header_norm.append(h)
+
+        # Garante unicidade e preenche vazios
+        seen = {}
+        headers_fixed = []
+        for i, h in enumerate(header_norm, start=1):
+            if not h:
+                h = f"Coluna_{i}"
+            base = h
+            k = base
+            n = 1
+            while k in seen:
+                n += 1
+                k = f"{base} ({n})"
+            seen[k] = True
+            headers_fixed.append(k)
+
+        # Determina a largura (n_colunas) a partir do cabeçalho
+        n_cols = len(headers_fixed)
+
+        # Coleta as linhas de dados (abaixo do header)
+        data_rows = values[hr + 1 :]
+
+        # Pad/truncate para garantir n_cols colunas
+        fixed_rows = []
+        for row in data_rows:
+            r = row[:n_cols] + [""] * max(0, n_cols - len(row))
+            fixed_rows.append(r)
+
+        df = pd.DataFrame(fixed_rows, columns=headers_fixed)
+
+        # Remove linhas totalmente vazias
+        if not df.empty:
+            df = df[~(df.apply(lambda s: s.astype(str).str.strip()).eq("").all(axis=1))]
+
+        return df
+
+    except Exception as e:
+        st.error(f"Erro ao acessar Google Sheets (roster): {e}")
+        return pd.DataFrame()
+
 def pontuar(resposta, lista):
     """
     Retorna pontuacao para a classificacao
@@ -285,6 +366,153 @@ def registrar(df_insert, aba, rerun=True):
 
     st.toast("Falha ao registrar dados após 3 tentativas.")
     return False  
+
+def _get_ws(url: str, worksheet: str):
+    try:
+        import gspread
+    except Exception:
+        st.error("Pacote gspread não instalado.")
+        return None
+    sa = st.secrets.get("connections", {}).get("gsheets", None)
+    if not sa:
+        st.error("Credenciais do Google (connections.gsheets) não configuradas no secrets.")
+        return None
+    try:
+        gc = gspread.service_account_from_dict(dict(sa))
+        sh = gc.open_by_url(url)
+        ws = sh.worksheet(worksheet) if worksheet else sh.sheet1
+        return ws
+    except Exception as e:
+        st.error(f"Erro ao acessar Google Sheets: {e}")
+        return None
+
+def _ensure_headers(ws, headers: List[str]):
+    try:
+        current = ws.row_values(1)
+    except Exception:
+        current = []
+    if not current:
+        ws.update("A1", [headers])
+        return headers
+    missing = [h for h in headers if h not in current]
+    if missing:
+        new_headers = current + missing
+        ws.update("A1", [new_headers])
+        return new_headers
+    return current
+
+def _get_all_records(ws):
+    try:
+        return ws.get_all_records()
+    except Exception as e:
+        st.error(f"Erro ao ler registros do Google Sheets: {e}")
+        return []
+
+def registrar_saude_mental(
+    row_dict: Dict[str, str | int | float],
+    unique_keys=("Nome + RA dx alunx", "Mês referência"),
+) -> bool:
+    """
+    Apende no Google Sheets [sheets].respostas (aba opcional [sheets].respostas_tab),
+    garantindo 1 registro por (Nome + RA dx alunx, Mês referência).
+    - Se já existir, NÃO atualiza (evita "upsert confuso"); retorna False.
+    - Se não existir, faz append.
+    Após escrever, limpa o cache para a página refletir na hora.
+    """
+    import time
+
+    cfg = st.secrets.get("sheets", {})
+    url = cfg.get("respostas")
+    worksheet_name = cfg.get("respostas_tab", None)
+    header_row = int(cfg.get("respostas_header_row", 1))
+
+    if not url:
+        st.error("Configure [sheets].respostas no secrets.toml.")
+        return False
+
+    # 1) Ler respostas como DataFrame, usando seu leitor blindado (mesmo header_row!)
+    try:
+        from paginas.funcoes import ler_roster, _get_ws
+    except Exception:
+        st.error("Não encontrei ler_roster/_get_ws. Verifique import.")
+        return False
+
+    df_exist = ler_roster(url, worksheet=worksheet_name, header_row=header_row)
+    # Normaliza chaves usadas para checagem
+    def _norm(x): 
+        return "" if x is None else str(x).strip()
+
+    key_vals = tuple(_norm(row_dict.get(k)) for k in unique_keys)
+
+    # 2) Checar duplicidade
+    if not df_exist.empty and all(k in df_exist.columns for k in unique_keys):
+        filtro = pd.Series([True] * len(df_exist))
+        for k, v in zip(unique_keys, key_vals):
+            filtro &= (df_exist[k].astype(str).str.strip() == v)
+        if df_exist.loc[filtro].shape[0] > 0:
+            # Já existe → não regrava (evita upsert em linha errada)
+            st.info("Já existe resposta para este aluno neste mês de referência.")
+            try:
+                st.cache_data.clear()
+            except Exception:
+                pass
+            return False
+
+    # 3) Garantir header e ordem das colunas base
+    base_cols = [
+        "Data/Hora da resposta", "Nome + RA dx alunx", "Colégio", "Ano",
+        "Gênero", "Praça", "Cor/raça", "Orientador Responsável",
+        "Progresso", "Comentário", "Ideação Suicida Identificada?",
+        "Classificação", "Documentos", "Mês referência",
+    ]
+    # ordena a linha conforme header existente; se não houver, usa base_cols
+    ws = _get_ws(url, worksheet_name)
+    if not ws:
+        return False
+
+    try:
+        values = ws.get_all_values()  # para saber header real
+    except Exception as e:
+        st.error(f"Falha ao ler a planilha de respostas: {e}")
+        return False
+
+    # Header real
+    if len(values) >= header_row:
+        header = [(h or "").strip() for h in values[header_row - 1]]
+    else:
+        header = []
+
+    if not header or all(h == "" for h in header):
+        # planilha “crua”: escreve header base
+        header = base_cols[:]
+        # garante que haja linhas até o header_row
+        if len(values) < header_row:
+            values.extend([[] for _ in range(header_row - len(values))])
+        ws.update(f"A{header_row}", [header])
+    else:
+        # acrescenta colunas base faltantes ao final do header
+        faltantes = [c for c in base_cols if c not in header]
+        if faltantes:
+            header = header + faltantes
+            ws.update(f"A{header_row}", [header])
+
+    # 4) Monta a nova linha na ordem do header e faz APPEND (sempre)
+    row_out = [str(row_dict.get(col, "")).strip() for col in header]
+    try:
+        ws.append_row(row_out, value_input_option="USER_ENTERED")
+    except Exception as e:
+        st.error(f"Falha ao gravar no Google Sheets: {e}")
+        return False
+
+    # 5) Limpa cache e dá um pequeno delay para UX
+    try:
+        st.cache_data.clear()
+    except Exception:
+        pass
+
+    # dá tempo do usuário ver o sucesso antes do rerun da página
+    time.sleep(1.2)
+    return True
 
 def atualizar_linha(aba: str, valor_id, novos_dados: dict):
     """
