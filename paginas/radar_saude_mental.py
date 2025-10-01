@@ -30,7 +30,7 @@ IDEACAO_OPCOES = [
     "Ideação Suicida - Planejamento",
     "Ideação Suicida - Tentativa",
 ]
-CLASSIFICACAO_OPCOES = ["Camada 1", "Camada 2", "Camada 3", "Camada 4"]
+CLASSIFICACAO_OPCOES = ["Camada 2", "Camada 3", "Camada 4"]
 
 def mes_referencia_anterior_str(agora: datetime) -> str:
     """Retorna YYYY-MM do mês anterior ao atual (ex.: '2025-08')."""
@@ -257,15 +257,10 @@ if enviar:
         "Documentos": documentos_links.strip() if documentos_links else "",
         "Mês referência": mes_ref
     }
-    df_out = pd.DataFrame([linha])
 
-    # try:
     ok = registrar_saude_mental(linha)
     if ok:
         st.success("Registro salvo com sucesso! ✅")
         st.rerun()
     else:
         st.info("Respostas NÃO foram enviadas ao Google Sheets.")
-
-    # except Exception as e:
-    #     st.error("Não foi possível salvar no Sheets de respostas.")
