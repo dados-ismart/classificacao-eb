@@ -12,6 +12,7 @@ from email.message import EmailMessage
 from datetime import datetime
 import hashlib
 from typing import Optional, Dict, List
+import time
 
 @st.cache_resource(ttl=7200)
 def conn():
@@ -62,24 +63,36 @@ def ler_sheets(aba, ttl=1):
     st.stop()
 
 @st.cache_data(show_spinner=False, ttl=7200) 
+def _ler_sheets_dados(aba):
+    """
+    Função interna apenas para leitura de dados - SEM elementos de UI
+    """
+    spreadsheet_name = st.secrets["connections"]["gsheets"]["spreadsheet_name"]
+    spreadsheet = conn.open(spreadsheet_name)
+    worksheet = spreadsheet.worksheet(aba)
+    dados = worksheet.get_all_records()
+    return pd.DataFrame(dados)
+
 def ler_sheets_cache(aba):
     """
-    Faz a leitura da planiha do google sheets, com cache
+    Faz a leitura da planilha do google sheets, com tratamento de erro e cache
     """
-    for i in range(0, 10):
+    for i in range(10):
         try:
-            spreadsheet_name = st.secrets["connections"]["gsheets"]["spreadsheet_name"]
-            spreadsheet = conn.open(spreadsheet_name)
-            worksheet = spreadsheet.worksheet(aba)
-            dados = worksheet.get_all_records()
-            return pd.DataFrame(dados)
+            return _ler_sheets_dados(aba)
         except Exception as e:
-                st.toast(f'Erro na tentativa {i}/10: {e}', icon="❌")
-                sleep(0.2)
-    st.error('Erro ao conectar com o sheets')
-    if st.button('Tentar novamente'):
-        st.rerun()
-    st.stop()
+            # Tenta novamente após um delay
+            time.sleep(0.2)
+            # Na última tentativa, mostra o erro
+            if i == 9:
+                st.toast(f'Erro ao conectar com o sheets: {e}', icon="❌")
+                st.error('Erro ao conectar com o sheets')
+                
+                # Botão de tentar novamente (fora do cache)
+                if st.button('Tentar novamente'):
+                    st.cache_data.clear()
+                    st.rerun()
+                st.stop()
 
 @st.cache_data(show_spinner=False, ttl=7200)
 def ler_roster(url: str, worksheet: Optional[str] = None, header_row: int = 1) -> pd.DataFrame:
